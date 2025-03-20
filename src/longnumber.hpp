@@ -16,8 +16,8 @@ public:
 
 	LongNumber(long double value);
 
-	friend long long precision(LongNumber& lhs);
-    friend void set_precision(LongNumber& lhs, long long precision);
+	friend int precision(LongNumber& lhs);
+    friend void set_precision(LongNumber& lhs, int precision);
 
     friend void normalize(LongNumber& lhs, LongNumber& rhs);
     friend void clearzeros(LongNumber& lhs);

@@ -20,7 +20,7 @@ void normalize(LongNumber& lhs, LongNumber& rhs) {
         ++rhs.exp;
         rhs.digits.push_back('0');
     }
-    int delta = abs((long long) lhs.digits.size() - (long long) rhs.digits.size());
+    int delta = abs((int) lhs.digits.size() - (int) rhs.digits.size());
     if (lhs.digits.size() < rhs.digits.size()) {
         reverse(lhs.digits.begin(), lhs.digits.end());
         for (int i = 0; i < delta; ++i) lhs.digits.push_back('0');
@@ -32,13 +32,13 @@ void normalize(LongNumber& lhs, LongNumber& rhs) {
     }
 }
 
-long long precision(LongNumber& lhs) {
-    return (long long) lhs.digits.size() - lhs.exp;
+int precision(LongNumber& lhs) {
+    return (int) lhs.digits.size() - lhs.exp;
 }
 
-void set_precision(LongNumber& lhs, long long nprecision) {
-    long long current = precision(lhs);
-    long long delta = abs(nprecision - current);
+void set_precision(LongNumber& lhs, int nprecision) {
+    int current = precision(lhs);
+    int delta = abs(nprecision - current);
     reverse(lhs.digits.begin(), lhs.digits.end());
     if (nprecision > current) {
         for (int i = 0; i < delta; ++i) lhs.digits.push_back('0');
@@ -76,6 +76,8 @@ LongNumber::LongNumber(long double value) {
 }
 
 LongNumber operator+(LongNumber lhs, LongNumber rhs) {
+    // cout << "SSUM" << endl;
+    set_precision(rhs, precision(lhs));
     if (lhs.positive != rhs.positive) {
         if (lhs.positive) {
             rhs.positive = !rhs.positive;
@@ -93,24 +95,18 @@ LongNumber operator+(LongNumber lhs, LongNumber rhs) {
         ++rhs.exp;
         rhs.digits.push_back('0');
     }
-    reverse(rhs.digits.begin(), rhs.digits.end());
-    int delta = abs((int) rhs.digits.size() - (int) lhs.digits.size());
-    if (lhs.digits.size() < rhs.digits.size()) {
-        for (int i = 0; i < delta; ++i) rhs.digits.pop_back();
-    } else {
-        for (int i = 0; i < delta; ++i) rhs.digits.push_back('0');
-    }
-    reverse(rhs.digits.begin(), rhs.digits.end());
+    // cout << lhs << endl << rhs << endl;
     char nextbit = '0';
-    LongNumber summary;
-    summary.positive = lhs.positive;
-    summary.exp = lhs.exp;
+    LongNumber summary = lhs;
+    // cout << summary << endl;
     for (int i = 0; i < lhs.digits.size(); ++i) {
         pair <char, char> currbits = addbit(nextbit, lhs.digits[i], rhs.digits[i]);
-        summary.digits.push_back(currbits.first);
+        summary.digits[i] = currbits.first;
         nextbit = currbits.second;
     }
     if (nextbit == '1') {summary.digits.push_back('1'); ++summary.exp;}
+    /*cout << summary << endl;
+    cout << "ESUM" << endl;*/
     return summary;
 }
 
@@ -121,6 +117,7 @@ LongNumber operator-(const LongNumber& value) {
 }
 
 LongNumber operator-(LongNumber lhs, LongNumber rhs) {
+    set_precision(rhs, precision(lhs));
     if (lhs.positive != rhs.positive) return lhs + (-rhs);
     while (lhs.exp < rhs.exp) {
         ++lhs.exp;
@@ -130,17 +127,7 @@ LongNumber operator-(LongNumber lhs, LongNumber rhs) {
         ++rhs.exp;
         rhs.digits.push_back('0');
     }
-    reverse(rhs.digits.begin(), rhs.digits.end());
-    int delta = abs((int) rhs.digits.size() - (int) lhs.digits.size());
-    if (lhs.digits.size() < rhs.digits.size()) {
-        for (int i = 0; i < delta; ++i) rhs.digits.pop_back();
-    } else {
-        for (int i = 0; i < delta; ++i) rhs.digits.push_back('0');
-    }
-    reverse(rhs.digits.begin(), rhs.digits.end());
-    LongNumber summary;
-    summary.positive = lhs.positive;
-    summary.exp = lhs.exp;
+    LongNumber summary = lhs;
     if (lhs < rhs) {
         swap(lhs, rhs);
         summary.positive = !lhs.positive;
@@ -152,13 +139,13 @@ LongNumber operator-(LongNumber lhs, LongNumber rhs) {
             getnxtbit = 0;
         }
         if (lhs.digits[i] == rhs.digits[i]) {
-            if (getnxtbit) summary.digits.push_back('1');
-            else summary.digits.push_back('0');
+            if (getnxtbit) summary.digits[i] = '1';
+            else summary.digits[i] = '0';
         } else if (lhs.digits[i] > rhs.digits[i]) {
-            summary.digits.push_back('1'); 
+            summary.digits[i] = '1';
         } else {
-            if (getnxtbit) summary.digits.push_back('0');
-            else summary.digits.push_back('1');
+            if (getnxtbit) summary.digits[i] = '0';
+            else summary.digits[i] = '1';
             getnxtbit = 1;
         }
     }
@@ -168,6 +155,7 @@ LongNumber operator-(LongNumber lhs, LongNumber rhs) {
 
 LongNumber operator *(LongNumber lhs, LongNumber rhs) {
     LongNumber summary = LongNumber(0);
+    set_precision(summary, precision(lhs));
     LongNumber currentstep;
     int step = rhs.digits.size();
     step = rhs.exp - step;
@@ -179,7 +167,7 @@ LongNumber operator *(LongNumber lhs, LongNumber rhs) {
         currentstep = lhs;
         currentstep.positive = 1;
         if (step < 0) {
-            for (int i = step; i < 0; ++i) {
+            for (int j = step; j < 0; ++j) {
                 --currentstep.exp;
                 if (currentstep.exp == 0) {
                     ++currentstep.exp;
@@ -188,7 +176,7 @@ LongNumber operator *(LongNumber lhs, LongNumber rhs) {
             }
         } else {
             reverse(currentstep.digits.begin(), currentstep.digits.end());
-            for (int i = -step; i < 0; ++i) {
+            for (int j = -step; j < 0; ++j) {
                 ++currentstep.exp;
                 if (currentstep.exp - 1 == currentstep.digits.size()) {
                     currentstep.digits.push_back('0');
@@ -200,10 +188,12 @@ LongNumber operator *(LongNumber lhs, LongNumber rhs) {
         ++step;
     }
     if (lhs.positive != rhs.positive) summary.positive = 0;
+    clearzeros(summary);
     return summary;
 }
 
 LongNumber operator /(LongNumber lhs, LongNumber rhs) {
+    set_precision(rhs, precision(lhs));
     if (rhs == LongNumber(0)) {
         throw "Division by zero is not allowed";
     }
@@ -217,7 +207,7 @@ LongNumber operator /(LongNumber lhs, LongNumber rhs) {
         l = LongNumber(lhs);
         r = l;
         reverse(r.digits.begin(), r.digits.end());
-        for (int i = (long long) rhs.digits.size() - 1; i >= 0; --i) {
+        for (int i = (int) rhs.digits.size() - 1; i >= 0; --i) {
             if (r.digits[i] == '1') break;
             ++r.exp;
             if (r.digits.size() == r.exp - 1) r.digits.push_back('0');
@@ -235,7 +225,7 @@ LongNumber operator /(LongNumber lhs, LongNumber rhs) {
     set_precision(smalldelta, precision(lhs));
     r = r + smalldelta;
     smalldelta.digits[0] = '1';
-    while (l != r - smalldelta) {
+    while (l < r - smalldelta) {
         LongNumber mid = l + ((r - l) * LongNumber(0.5));
         LongNumber middiff = lhs - rhs * mid;
         LongNumber ldiff = lhs - rhs * l;
@@ -254,7 +244,7 @@ LongNumber operator /(LongNumber lhs, LongNumber rhs) {
 bool operator ==(LongNumber lhs, LongNumber rhs) {
     normalize(lhs, rhs);
     bool zeroall = 1;
-    for (int i = (long long) lhs.digits.size() - 1; i >= 0; --i) {
+    for (int i = (int) lhs.digits.size() - 1; i >= 0; --i) {
         if (!(lhs.digits[i] == rhs.digits[i])) return 0;
         zeroall &= (lhs.digits[i] == '0');
         zeroall &= (rhs.digits[i] == '0');
@@ -271,7 +261,7 @@ bool operator !=(LongNumber lhs, LongNumber rhs) {
 bool operator <(LongNumber lhs, LongNumber rhs) {
     normalize(lhs, rhs);
     bool zeroall = 1;
-    for (int i = (long long) lhs.digits.size() - 1; i >= 0; --i) {
+    for (int i = (int) lhs.digits.size() - 1; i >= 0; --i) {
         if (lhs.digits[i] < rhs.digits[i]) {
             if (rhs.positive) return 1;
             return 0;
@@ -304,7 +294,8 @@ ostream& operator<<(std::ostream& out, const LongNumber& number) {
     if (!number.positive) out << '-';
     for (int i = ((int) number.digits.size()) - 1; i >= 0; --i) {
         out << number.digits[i];
-        if (number.exp != 0 && i == ((int) number.digits.size()) - number.exp) out << '.';
+        if (number.exp != ((int) number.digits.size()) && \
+            i == ((int) number.digits.size()) - number.exp) out << '.';
     }
     return out;
 }

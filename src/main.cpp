@@ -1,8 +1,10 @@
 #include "longnumber.cpp"
 #include <bits/stdc++.h>
+#include "pi.cpp"
 
 using namespace std;
 
 signed main() {
-    cout << (LongNumber(5) + LongNumber(1)) * LongNumber(6) << endl;
+    int arg; cin >> arg;
+    cout << getpi(arg) << endl;
 }
